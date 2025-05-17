@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en"> <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-translate-key="pageTitle">HabitFlow - Habit Tracker</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#F4F9FF">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #F4F9FF;
+            color: #3B3B3B;
+        }
+        .habitflow-gradient-text {
+            background-image: linear-gradient(to right, #EC4899, #8B5CF6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .habitflow-gradient-bg {
+            background-image: linear-gradient(to right, #EC4899, #8B5CF6);
+        }
+        .modal {
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        .modal-hidden {
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+        }
+        .modal-visible {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+        .day-select-btn.active {
+            background-color: #8B5CF6; /* purple-600 */
+            color: white;
+            border-color: #8B5CF6;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="min-h-screen p-4 sm:p-6">
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+            <h1 data-translate-key="headerTitle" class="text-2xl sm:text-3xl font-bold habitflow-gradient-text">🧠 HabitFlow</h1>
+            <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                <p id="current-date-text" class="text-sm opacity-75 text-right sm:text-left"></p>
+                <div class="flex items-center gap-2 sm:ml-auto"> <label for="language-selector" id="language-selector-label" data-translate-key="languageSelectorLabel" class="text-sm text-gray-600">Language:</label>
+                    <select id="language-selector" class="p-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 bg-white">
+                        </select>
+                </div>
+                <button id="open-add-habit-modal-btn" data-translate-key="addHabitButton" class="w-full sm:w-auto rounded-xl text-white px-4 py-2 font-semibold habitflow-gradient-bg hover:opacity-90 transition shadow-md hover:shadow-lg">
+                    + Add Habit
+                </button>
+            </div>
+        </header>
+
+        <section id="habits-list-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            </section>
+
+        <div id="no-habits-message" class="text-center py-10 hidden">
+            <p data-translate-key="noHabitsYet" class="text-gray-500 text-lg">You don't have any habits yet.</p>
+            <p data-translate-key="noHabitsHint" class="text-gray-400">Press '+ Add Habit' to start!</p>
+        </div>
+    </div>
+
+    <div id="add-habit-modal" class="modal modal-hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md space-y-4 my-auto">
+            <div class="flex justify-between items-center">
+                <h2 data-translate-key="modalTitle" class="text-xl font-semibold text-gray-800">Add New Habit</h2>
+                <button id="close-add-habit-modal-btn" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <input type="text" id="new-habit-name" data-translate-key-placeholder="habitNamePlaceholder" placeholder="Habit name (e.g., Read 30 min)" class="w-full p-2 border border-gray-300 rounded-lg focus:border-purple-500 focus:ring-purple-500">
+
+            <div>
+                <label data-translate-key="daysOfWeekLabel" class="block text-sm font-medium text-gray-700 mb-1">Days of the Week (for reminder):</label>
+                <div id="day-selector" class="flex flex-wrap gap-2">
+                    <button data-day-value="1" data-translate-key-day="1" class="day-select-btn flex-grow sm:flex-grow-0 px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:bg-gray-100 transition-colors">Mon</button>
+                    <button data-day-value="2" data-translate-key-day="2" class="day-select-btn flex-grow sm:flex-grow-0 px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:bg-gray-100 transition-colors">Tue</button>
+                    <button data-day-value="3" data-translate-key-day="3" class="day-select-btn flex-grow sm:flex-grow-0 px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:bg-gray-100 transition-colors">Wed</button>
+                    <button data-day-value="4" data-translate-key-day="4" class="day-select-btn flex-grow sm:flex-grow-0 px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:bg-gray-100 transition-colors">Thu</button>
+                    <button data-day-value="5" data-translate-key-day="5" class="day-select-btn flex-grow sm:flex-grow-0 px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:bg-gray-100 transition-colors">Fri</button>
+                    <button data-day-value="6" data-translate-key-day="6" class="day-select-btn flex-grow sm:flex-grow-0 px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:bg-gray-100 transition-colors">Sat</button>
+                    <button data-day-value="0" data-translate-key-day="0" class="day-select-btn flex-grow sm:flex-grow-0 px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:bg-gray-100 transition-colors">Sun</button>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center pt-2">
+                <label for="new-habit-reminder-checkbox" data-translate-key="enableReminderLabel" class="text-sm text-gray-600 select-none">Enable Reminder</label>
+                <input type="checkbox" id="new-habit-reminder-checkbox" class="h-5 w-5 text-purple-600 focus:ring-purple-500 border-gray-300 rounded">
+            </div>
+            <div id="new-habit-time-container" class="hidden">
+                <label for="new-habit-time" data-translate-key="reminderTimeLabel" class="block text-sm font-medium text-gray-700 mb-1">Reminder Time:</label>
+                <input type="time" id="new-habit-time" class="w-full p-2 border border-gray-300 rounded-lg focus:border-purple-500 focus:ring-purple-500">
+            </div>
+            <button id="save-habit-btn" data-translate-key="saveHabitButton" class="w-full habitflow-gradient-bg text-white rounded-lg py-2.5 font-semibold shadow-md hover:shadow-lg hover:opacity-90 transition">
+                Save Habit
+            </button>
+        </div>
+    </div>
+
+    <footer class="text-center py-8 mt-12 text-gray-500 text-sm">
+        <p id="footer-text">HabitFlow &copy; <span id="current-year"></span>. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const LOCAL_STORAGE_KEY = "habitflow.habits.vanilla";
+        const LANGUAGE_STORAGE_KEY = "habitflow.language";
+
+        const translations = {
+            en: {
+                pageTitle: "HabitFlow - Habit Tracker",
+                headerTitle: "🧠 HabitFlow",
+                currentDateText: (date) => `Today: ${date}`,
+                addHabitButton: "+ Add Habit",
+                noHabitsYet: "You don't have any habits yet.",
+                noHabitsHint: "Press '+ Add Habit' to start!",
+                modalTitle: "Add New Habit",
+                habitNamePlaceholder: "Habit name (e.g., Read 30 min)",
+                daysOfWeekLabel: "Days of the Week (for reminder):",
+                dayNames: { 0: "Sun", 1: "Mon", 2: "Tue", 3: "Wed", 4: "Thu", 5: "Fri", 6: "Sat" },
+                enableReminderLabel: "Enable Reminder",
+                reminderTimeLabel: "Reminder Time:",
+                saveHabitButton: "Save Habit",
+                footerCopyright: (year) => `HabitFlow © ${year}. All rights reserved.`,
+                deleteButtonAriaLabel: (habitName) => `Delete ${habitName}`,
+                deleteConfirmation: (habitName) => `Are you sure you want to delete the habit "${habitName}"?`,
+                markDoneButton: "Mark Done",
+                markUndoneButton: "✅ Done Today",
+                noReminder: "No reminder set",
+                frequencyDisplay: (days, time) => `${days} ${time ? `@ ${time}` : ''}`.trim(),
+                alertEnterHabitName: "Please enter a name for the habit.",
+                alertSelectDayForReminder: "Please select at least one day for the reminder.",
+                alertSelectTimeForReminder: "Please select a time for the reminder.",
+                notificationTitle: (habitName) => `Time for: ${habitName}!`,
+                languageSelectorLabel: "Language:",
+            },
+            ro: {
+                pageTitle: "HabitFlow - Urmăritor de Obiceiuri",
+                headerTitle: "🧠 HabitFlow",
+                currentDateText: (date) => `Astăzi: ${date}`,
+                addHabitButton: "+ Adaugă Obicei",
+                noHabitsYet: "Nu ai niciun obicei încă.",
+                noHabitsHint: "Apasă pe '+ Adaugă Obicei' pentru a începe!",
+                modalTitle: "Adaugă un Obicei Nou",
+                habitNamePlaceholder: "Numele obiceiului (ex: Citit 30 min)",
+                daysOfWeekLabel: "Zilele Săptămânii (pentru memento):",
+                dayNames: { 0: "Dum", 1: "Lun", 2: "Mar", 3: "Mie", 4: "Joi", 5: "Vin", 6: "Sâm" },
+                enableReminderLabel: "Activează Memento",
+                reminderTimeLabel: "Ora Memento-ului:",
+                saveHabitButton: "Salvează Obiceiul",
+                footerCopyright: (year) => `HabitFlow © ${year}. Toate drepturile rezervate.`,
+                deleteButtonAriaLabel: (habitName) => `Șterge ${habitName}`,
+                deleteConfirmation: (habitName) => `Ești sigur că vrei să ștergi obiceiul "${habitName}"?`,
+                markDoneButton: "Marchează Finalizat",
+                markUndoneButton: "✅ Finalizat Azi",
+                noReminder: "Niciun memento setat",
+                frequencyDisplay: (days, time) => `${days} ${time ? `@ ${time}` : ''}`.trim(),
+                alertEnterHabitName: "Te rog introdu un nume pentru obicei.",
+                alertSelectDayForReminder: "Te rog selectează cel puțin o zi pentru memento.",
+                alertSelectTimeForReminder: "Te rog selectează o oră pentru memento.",
+                notificationTitle: (habitName) => `Este timpul pentru: ${habitName}!`,
+                languageSelectorLabel: "Limbă:",
+            },
+            es: {
+                pageTitle: "HabitFlow - Seguimiento de Hábitos",
+                headerTitle: "🧠 HabitFlow",
+                currentDateText: (date) => `Hoy: ${date}`,
+                addHabitButton: "+ Añadir Hábito",
+                noHabitsYet: "Aún no tienes hábitos.",
+                noHabitsHint: "¡Pulsa '+ Añadir Hábito' para empezar!",
+                modalTitle: "Añadir Nuevo Hábito",
+                habitNamePlaceholder: "Nombre del hábito (ej: Leer 30 min)",
+                daysOfWeekLabel: "Días de la Semana (para recordatorio):",
+                dayNames: { 0: "Dom", 1: "Lun", 2: "Mar", 3: "Mié", 4: "Jue", 5: "Vie", 6: "Sáb" },
+                enableReminderLabel: "Activar Recordatorio",
+                reminderTimeLabel: "Hora del Recordatorio:",
+                saveHabitButton: "Guardar Hábito",
+                footerCopyright: (year) => `HabitFlow © ${year}. Todos los derechos reservados.`,
+                deleteButtonAriaLabel: (habitName) => `Eliminar ${habitName}`,
+                deleteConfirmation: (habitName) => `¿Estás seguro de que quieres eliminar el hábito "${habitName}"?`,
+                markDoneButton: "Marcar como Hecho",
+                markUndoneButton: "✅ Hecho Hoy",
+                noReminder: "Sin recordatorio",
+                frequencyDisplay: (days, time) => `${days} ${time ? `@ ${time}` : ''}`.trim(),
+                alertEnterHabitName: "Por favor, introduce un nombre para el hábito.",
+                alertSelectDayForReminder: "Por favor, selecciona al menos un día para el recordatorio.",
+                alertSelectTimeForReminder: "Por favor, selecciona una hora para el recordatorio.",
+                notificationTitle: (habitName) => `¡Es hora de: ${habitName}!`,
+                languageSelectorLabel: "Idioma:",
+            },
+            fr: {
+                pageTitle: "HabitFlow - Suivi des Habitudes",
+                headerTitle: "🧠 HabitFlow",
+                currentDateText: (date) => `Aujourd'hui: ${date}`,
+                addHabitButton: "+ Ajouter Habitude",
+                noHabitsYet: "Vous n'avez pas encore d'habitudes.",
+                noHabitsHint: "Appuyez sur '+ Ajouter Habitude' pour commencer !",
+                modalTitle: "Ajouter une Nouvelle Habitude",
+                habitNamePlaceholder: "Nom de l'habitude (ex: Lire 30 min)",
+                daysOfWeekLabel: "Jours de la Semaine (pour rappel):",
+                dayNames: { 0: "Dim", 1: "Lun", 2: "Mar", 3: "Mer", 4: "Jeu", 5: "Ven", 6: "Sam" },
+                enableReminderLabel: "Activer Rappel",
+                reminderTimeLabel: "Heure du Rappel:",
+                saveHabitButton: "Enregistrer Habitude",
+                footerCopyright: (year) => `HabitFlow © ${year}. Tous droits réservés.`,
+                deleteButtonAriaLabel: (habitName) => `Supprimer ${habitName}`,
+                deleteConfirmation: (habitName) => `Êtes-vous sûr de vouloir supprimer l'habitude "${habitName}" ?`,
+                markDoneButton: "Marquer comme Fait",
+                markUndoneButton: "✅ Fait Aujourd'hui",
+                noReminder: "Aucun rappel défini",
+                frequencyDisplay: (days, time) => `${days} ${time ? `@ ${time}` : ''}`.trim(),
+                alertEnterHabitName: "Veuillez entrer un nom pour l'habitude.",
+                alertSelectDayForReminder: "Veuillez sélectionner au moins un jour pour le rappel.",
+                alertSelectTimeForReminder: "Veuillez sélectionner une heure pour le rappel.",
+                notificationTitle: (habitName) => `C'est l'heure de : ${habitName} !`,
+                languageSelectorLabel: "Langue:",
+            },
+            de: {
+                pageTitle: "HabitFlow - Gewohnheits-Tracker",
+                headerTitle: "🧠 HabitFlow",
+                currentDateText: (date) => `Heute: ${date}`,
+                addHabitButton: "+ Gewohnheit hinzufügen",
+                noHabitsYet: "Du hast noch keine Gewohnheiten.",
+                noHabitsHint: "Drücke '+ Gewohnheit hinzufügen' um zu starten!",
+                modalTitle: "Neue Gewohnheit hinzufügen",
+                habitNamePlaceholder: "Name der Gewohnheit (z.B. 30 Min. lesen)",
+                daysOfWeekLabel: "Wochentage (für Erinnerung):",
+                dayNames: { 0: "So", 1: "Mo", 2: "Di", 3: "Mi", 4: "Do", 5: "Fr", 6: "Sa" },
+                enableReminderLabel: "Erinnerung aktivieren",
+                reminderTimeLabel: "Erinnerungszeit:",
+                saveHabitButton: "Gewohnheit speichern",
+                footerCopyright: (year) => `HabitFlow © ${year}. Alle Rechte vorbehalten.`,
+                deleteButtonAriaLabel: (habitName) => `${habitName} löschen`,
+                deleteConfirmation: (habitName) => `Möchtest du die Gewohnheit "${habitName}" wirklich löschen?`,
+                markDoneButton: "Als erledigt markieren",
+                markUndoneButton: "✅ Heute erledigt",
+                noReminder: "Keine Erinnerung eingestellt",
+                frequencyDisplay: (days, time) => `${days} ${time ? `um ${time}` : ''}`.trim(),
+                alertEnterHabitName: "Bitte gib einen Namen für die Gewohnheit ein.",
+                alertSelectDayForReminder: "Bitte wähle mindestens einen Tag für die Erinnerung aus.",
+                alertSelectTimeForReminder: "Bitte wähle eine Zeit für die Erinnerung aus.",
+                notificationTitle: (habitName) => `Zeit für: ${habitName}!`,
+                languageSelectorLabel: "Sprache:",
+            }
+        };
+        let currentLanguage = 'en'; // Default language
+
+        const languageOptions = {
+            en: "English", ro: "Română", es: "Español", fr: "Français", de: "Deutsch"
+        };
+
+        // DOM Elements
+        const currentDateTextEl = document.getElementById('current-date-text');
+        const habitsListContainerEl = document.getElementById('habits-list-container');
+        const noHabitsMessageEl = document.getElementById('no-habits-message');
+        const currentYearEl = document.getElementById('current-year');
+        const languageSelectorEl = document.getElementById('language-selector');
+        const footerTextEl = document.getElementById('footer-text');
+
+        const addHabitModal = document.getElementById('add-habit-modal');
+        const openAddHabitModalBtn = document.getElementById('open-add-habit-modal-btn');
+        const closeAddHabitModalBtn = document.getElementById('close-add-habit-modal-btn');
+        const saveHabitBtn = document.getElementById('save-habit-btn');
+
+        const newHabitNameInput = document.getElementById('new-habit-name');
+        const daySelectorContainer = document.getElementById('day-selector');
+        const daySelectButtons = daySelectorContainer.querySelectorAll('.day-select-btn');
+        const newHabitReminderCheckbox = document.getElementById('new-habit-reminder-checkbox');
+        const newHabitTimeContainer = document.getElementById('new-habit-time-container');
+        const newHabitTimeInput = document.getElementById('new-habit-time');
+
+        let habits = [];
+        let currentSelectedDaysInModal = new Set();
+
+        // --- Language Functions ---
+        function saveLanguagePreference(lang) {
+            localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+        }
+
+        function loadLanguagePreference() {
+            const preferredLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+            if (preferredLang && translations[preferredLang]) {
+                return preferredLang;
+            }
+            return 'en'; // Default to English
+        }
+
+        function applyTranslations() {
+            const lang = currentLanguage;
+            document.documentElement.lang = lang; // Set HTML lang attribute
+
+            document.querySelectorAll('[data-translate-key]').forEach(el => {
+                const key = el.dataset.translateKey;
+                if (translations[lang] && translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+            document.querySelectorAll('[data-translate-key-placeholder]').forEach(el => {
+                const key = el.dataset.translateKeyPlaceholder;
+                if (translations[lang] && translations[lang][key]) {
+                    el.placeholder = translations[lang][key];
+                }
+            });
+             document.querySelectorAll('[data-translate-key-day]').forEach(el => {
+                const dayValue = el.dataset.translateKeyDay;
+                if (translations[lang] && translations[lang].dayNames && translations[lang].dayNames[dayValue]) {
+                    el.textContent = translations[lang].dayNames[dayValue];
+                }
+            });
+
+            // Specific elements
+            document.title = translations[lang].pageTitle;
+            currentDateTextEl.textContent = translations[lang].currentDateText(formatDate(new Date(), lang));
+            footerTextEl.innerHTML = translations[lang].footerCopyright(new Date().getFullYear()); // Use innerHTML for copyright span
+
+            // Re-render habits to apply translations within cards
+            renderHabits();
+        }
+
+
+        // --- Utility Functions ---
+        function loadHabits() {
+            const storedHabits = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (storedHabits) {
+                try {
+                    habits = JSON.parse(storedHabits).map(habit => ({
+                        ...habit,
+                        selectedDays: habit.selectedDays || [],
+                    }));
+                } catch (e) { console.error("Error loading habits:", e); habits = []; }
+            }
+        }
+
+        function saveHabits() {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(habits));
+        }
+
+        function formatDate(date, lang) {
+            const langMap = { en: 'en-US', ro: 'ro-RO', es: 'es-ES', fr: 'fr-FR', de: 'de-DE' };
+            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString(langMap[lang] || 'en-US', options);
+        }
+
+        function formatSelectedDaysForDisplay(daysArray, lang) {
+            if (!daysArray || daysArray.length === 0) return "";
+            const currentDayNames = translations[lang].dayNames;
+            const sortedDays = [...daysArray].sort((a, b) => (a === 0 ? 7 : a) - (b === 0 ? 7 : b)); // Sun last
+            return sortedDays.map(dayNum => currentDayNames[dayNum]).join(', ');
+        }
+
+        function toggleModal(modalElement, show) {
+            if (show) {
+                modalElement.classList.remove('modal-hidden');
+                modalElement.classList.add('modal-visible');
+            } else {
+                modalElement.classList.add('modal-hidden');
+                modalElement.classList.remove('modal-visible');
+                resetDaySelector();
+            }
+        }
+
+        function resetDaySelector() {
+            currentSelectedDaysInModal.clear();
+            daySelectButtons.forEach(btn => btn.classList.remove('active'));
+        }
+
+        // --- Application Logic ---
+        function renderHabits() {
+            habitsListContainerEl.innerHTML = '';
+            const lang = currentLanguage;
+
+            if (habits.length === 0) {
+                noHabitsMessageEl.classList.remove('hidden');
+                habitsListContainerEl.classList.add('hidden');
+            } else {
+                noHabitsMessageEl.classList.add('hidden');
+                habitsListContainerEl.classList.remove('hidden');
+                habits.forEach(habit => {
+                    const formattedDays = formatSelectedDaysForDisplay(habit.selectedDays, lang);
+                    let frequencyText;
+                    if (habit.reminder && habit.selectedDays.length > 0 && habit.time) {
+                        frequencyText = translations[lang].frequencyDisplay(formattedDays, habit.time);
+                    } else {
+                        frequencyText = translations[lang].noReminder;
+                    }
+
+                    const habitCard = `
+                        <div class="bg-white border border-[#EAEAFD] shadow-sm rounded-2xl hover:shadow-lg transition-shadow duration-300 ${habit.doneToday ? 'opacity-70' : ''} p-4 sm:p-5 space-y-3">
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-base sm:text-lg font-semibold text-gray-800">${habit.name}</h3>
+                                <button data-id="${habit.id}" class="delete-habit-btn text-xs sm:text-sm px-2.5 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition" 
+                                        aria-label="${translations[lang].deleteButtonAriaLabel(habit.name)}">
+                                    🗑️
+                                </button>
+                            </div>
+                            <p class="text-sm text-gray-500">${frequencyText}</p>
+                            <button data-id="${habit.id}" class="toggle-done-btn w-full rounded-xl font-semibold transition text-sm py-2.5 ${habit.doneToday ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'}">
+                                ${habit.doneToday ? translations[lang].markUndoneButton : translations[lang].markDoneButton}
+                            </button>
+                        </div>
+                    `;
+                    habitsListContainerEl.insertAdjacentHTML('beforeend', habitCard);
+                });
+            }
+            addEventListenersToHabitButtons();
+        }
+
+        function handleAddHabit() {
+            const name = newHabitNameInput.value.trim();
+            const reminder = newHabitReminderCheckbox.checked;
+            const time = newHabitTimeInput.value;
+            const selectedDays = Array.from(currentSelectedDaysInModal);
+            const lang = currentLanguage;
+
+            if (!name) { alert(translations[lang].alertEnterHabitName); return; }
+            if (reminder && selectedDays.length === 0) { alert(translations[lang].alertSelectDayForReminder); return; }
+            if (reminder && !time) { alert(translations[lang].alertSelectTimeForReminder); return; }
+
+            const newHabit = { id: Date.now(), name, reminder, time: reminder ? time : "", selectedDays: reminder ? selectedDays : [], doneToday: false };
+            habits.push(newHabit);
+            saveHabits();
+            renderHabits();
+            toggleModal(addHabitModal, false);
+            newHabitNameInput.value = '';
+            newHabitReminderCheckbox.checked = false;
+            newHabitTimeContainer.classList.add('hidden');
+            newHabitTimeInput.value = '';
+        }
+
+        function handleDeleteHabit(habitId) {
+            const habitToDelete = habits.find(h => h.id === habitId);
+            if (!habitToDelete) return;
+
+            if (confirm(translations[currentLanguage].deleteConfirmation(habitToDelete.name))) {
+                habits = habits.filter(h => h.id !== habitId);
+                saveHabits();
+                renderHabits();
+            }
+        }
+
+        function handleToggleDone(habitId) {
+            const habit = habits.find(h => h.id === habitId);
+            if (habit) { habit.doneToday = !habit.doneToday; saveHabits(); renderHabits(); }
+        }
+
+        function addEventListenersToHabitButtons() {
+            document.querySelectorAll('.delete-habit-btn').forEach(button => {
+                button.removeEventListener('click', handleDeleteHabitEvent);
+                button.addEventListener('click', handleDeleteHabitEvent);
+            });
+            document.querySelectorAll('.toggle-done-btn').forEach(button => {
+                button.removeEventListener('click', handleToggleDoneEvent);
+                button.addEventListener('click', handleToggleDoneEvent);
+            });
+        }
+
+        function handleDeleteHabitEvent(event) { handleDeleteHabit(parseInt(event.currentTarget.dataset.id)); }
+        function handleToggleDoneEvent(event) { handleToggleDone(parseInt(event.currentTarget.dataset.id)); }
+
+        function checkReminders() {
+            if (Notification.permission !== "granted") return;
+            const now = new Date();
+            const currentDay = now.getDay();
+            const currentTime = now.toTimeString().slice(0, 5);
+            const todayString = now.toISOString().slice(0, 10);
+            const lang = currentLanguage;
+
+            habits.forEach(habit => {
+                const reminderFiredKey = `reminder_${habit.id}_${todayString}_${habit.time}`;
+                if (habit.reminder && habit.selectedDays && habit.selectedDays.includes(currentDay) &&
+                    habit.time === currentTime && !habit.doneToday && !sessionStorage.getItem(reminderFiredKey)) {
+                    new Notification(translations[lang].notificationTitle(habit.name));
+                    sessionStorage.setItem(reminderFiredKey, 'true');
+                }
+            });
+        }
+
+        function dailyResetDoneStatus() {
+            const today = new Date().toISOString().slice(0, 10);
+            const lastResetDate = localStorage.getItem('habitflow.lastResetDate');
+            if (lastResetDate !== today) {
+                habits.forEach(habit => { habit.doneToday = false; });
+                saveHabits();
+                localStorage.setItem('habitflow.lastResetDate', today);
+                console.log("Habit 'doneToday' status reset for new day.");
+                if (document.readyState === 'complete') renderHabits(); // Re-render if page already loaded
+            }
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            currentLanguage = loadLanguagePreference();
+
+            // Populate language selector
+            Object.keys(languageOptions).forEach(langCode => {
+                const option = document.createElement('option');
+                option.value = langCode;
+                option.textContent = languageOptions[langCode];
+                languageSelectorEl.appendChild(option);
+            });
+            languageSelectorEl.value = currentLanguage;
+
+            languageSelectorEl.addEventListener('change', (event) => {
+                currentLanguage = event.target.value;
+                saveLanguagePreference(currentLanguage);
+                applyTranslations();
+            });
+            
+            currentYearEl.textContent = new Date().getFullYear(); // This is static, no need to translate its content
+
+            loadHabits();
+            dailyResetDoneStatus();
+            applyTranslations(); // Apply translations on initial load
+
+            openAddHabitModalBtn.addEventListener('click', () => { resetDaySelector(); toggleModal(addHabitModal, true); });
+            closeAddHabitModalBtn.addEventListener('click', () => toggleModal(addHabitModal, false));
+            saveHabitBtn.addEventListener('click', handleAddHabit);
+
+            daySelectButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const dayValue = parseInt(button.dataset.dayValue);
+                    button.classList.toggle('active');
+                    if (currentSelectedDaysInModal.has(dayValue)) currentSelectedDaysInModal.delete(dayValue);
+                    else currentSelectedDaysInModal.add(dayValue);
+                });
+            });
+
+            newHabitReminderCheckbox.addEventListener('change', (event) => {
+                newHabitTimeContainer.classList.toggle('hidden', !event.target.checked);
+            });
+
+            if ('Notification' in window && Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") console.log("Notification permission granted.");
+                });
+            }
+            setInterval(checkReminders, 30000);
+            checkReminders();
+        });
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('Service Worker registered.', reg))
+                    .catch(err => console.error('Service Worker registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>
